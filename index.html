@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Studio - Gen & Scan</title>
+    <script src="browser@4.js"></script>
+    <script src="qrcode.min.js"></script>
+    <script src="html5-qrcode.min.js"></script>
+    
+    <style>
+        /* Custom Neo-Brutalism Shadow & Border Utilities */
+        .brutal-card {
+            border: 4px solid #000000;
+            box-shadow: 6px 6px 0px 0px #000000;
+        }
+        .brutal-btn {
+            border: 3px solid #000000;
+            box-shadow: 3px 3px 0px 0px #000000;
+            transition: all 0.1s ease;
+        }
+        .brutal-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px 0px #000000;
+        }
+        .brutal-input {
+            border: 3px solid #000000;
+        }
+        .brutal-input:focus {
+            outline: none;
+            background-color: #fef08a; /* yellow-200 */
+        }
+    </style>
+</head>
+<body class="bg-[#FFDE4D] font-sans min-h-screen p-4 md:p-8 text-black">
+
+    <header class="max-w-6xl mx-auto mb-8 text-center md:text-left">
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tight bg-[#FF6B6B] inline-block p-4 brutal-card transform -rotate-1">
+            ⚡ IKLIMAH QR STUDIO
+        </h1>
+        <p class="font-bold text-lg mt-4 bg-white inline-block px-3 py-1 brutal-card">
+            Generate & Scan QR Code dalam Satu Tempat!
+        </p>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <section class="bg-[#4D96FF] p-6 brutal-card flex flex-col justify-between">
+            <div>
+                <h2 class="text-2xl font-black uppercase mb-4 bg-white p-2 brutal-card inline-block">
+                    🎨 QR Generator
+                </h2>
+                
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="switchTab('text')" id="tab-text" class="brutal-btn bg-[#FF6B6B] px-3 py-1 font-bold active-tab">Teks/URL</button>
+                    <button onclick="switchTab('wifi')" id="tab-wifi" class="brutal-btn bg-white px-3 py-1 font-bold">WiFi</button>
+                    <button onclick="switchTab('wa')" id="tab-wa" class="brutal-btn bg-white px-3 py-1 font-bold">WhatsApp</button>
+                    <button onclick="switchTab('call')" id="tab-call" class="brutal-btn bg-white px-3 py-1 font-bold">Telepon</button>
+                    <button onclick="switchTab('maps')" id="tab-maps" class="brutal-btn bg-white px-3 py-1 font-bold">Maps</button>
+                </div>
+
+                <div class="bg-white p-4 brutal-card mb-6">
+                    <div id="form-text" class="qr-form">
+                        <label class="block font-bold mb-2">Teks atau URL Lengkap:</label>
+                        <input type="text" id="input-text" placeholder="https://google.com atau teks biasa" class="w-full p-2 brutal-input bg-gray-50">
+                    </div>
+
+                    <div id="form-wifi" class="qr-form hidden">
+                        <label class="block font-bold mb-1">Nama WiFi (SSID):</label>
+                        <input type="text" id="input-wifi-ssid" placeholder="Home_WiFi" class="w-full p-2 mb-3 brutal-input bg-gray-50">
+                        <label class="block font-bold mb-1">Password:</label>
+                        <input type="password" id="input-wifi-pass" placeholder="******" class="w-full p-2 mb-3 brutal-input bg-gray-50">
+                        <label class="block font-bold mb-1">Enkripsi:</label>
+                        <select id="input-wifi-type" class="w-full p-2 brutal-input bg-gray-50">
+                            <option value="WPA">WPA/WPA2</option>
+                            <option value="WEP">WEP</option>
+                            <option value="nopass">Tanpa Password</option>
+                        </select>
+                    </div>
+
+                    <div id="form-wa" class="qr-form hidden">
+                        <label class="block font-bold mb-1">Nomor WA (Format Internasional):</label>
+                        <input type="text" id="input-wa-num" placeholder="628123456789" class="w-full p-2 mb-3 brutal-input bg-gray-50">
+                        <label class="block font-bold mb-1">Pesan Otomatis (Opsional):</label>
+                        <textarea id="input-wa-msg" placeholder="Halo, saya ingin bertanya..." class="w-full p-2 brutal-input bg-gray-50 rows=2"></textarea>
+                    </div>
+
+                    <div id="form-call" class="qr-form hidden">
+                        <label class="block font-bold mb-2">Nomor Telepon:</label>
+                        <input type="text" id="input-call" placeholder="+628123456789" class="w-full p-2 brutal-input bg-gray-50">
+                    </div>
+
+                    <div id="form-maps" class="qr-form hidden">
+                        <div class="mb-4 bg-yellow-100 p-2 border-2 border-black text-xs font-bold">
+                            💡 Anda bisa langsung paste Link Google Maps biasa, sistem akan otomatis mendeteksi koordinatnya tanpa perlu ribet!
+                        </div>
+                        <label class="block font-bold mb-1">Paste Link Google Maps ATAU Koordinat:</label>
+                        <input type="text" id="input-maps-main" placeholder="Paste link maps / koordinat di sini..." class="w-full p-2 mb-3 brutal-input bg-gray-50" oninput="handleMapsInput(this.value)">
+                        
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <label class="block text-xs font-bold">Latitude:</label>
+                                <input type="text" id="input-maps-lat" placeholder="-6.2000" class="w-full p-1 text-sm brutal-input bg-gray-100" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold">Longitude:</label>
+                                <input type="text" id="input-maps-lon" placeholder="106.8166" class="w-full p-1 text-sm brutal-input bg-gray-100" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="generateQRCode()" class="w-full bg-[#6BCB77] text-xl font-black py-3 brutal-btn uppercase tracking-wider mb-6">
+                    Bikin QR Code! 🚀
+                </button>
+            </div>
+
+            <div class="bg-white p-6 brutal-card flex flex-col items-center justify-center min-h-[260px]">
+                <div id="qrcode-container" class="border-4 border-black p-2 bg-white"></div>
+                <div id="qr-action-buttons" class="hidden mt-4 w-full flex gap-2">
+                    <button onclick="downloadQR()" class="flex-1 bg-[#FF6B6B] py-2 font-bold brutal-btn text-white">Unduh PNG</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SCANNER SECTION ================= -->
+		<section class="bg-[#6BCB77] p-6 brutal-card flex flex-col justify-between">
+			<div>
+				<h2 class="text-2xl font-black uppercase mb-4 bg-white p-2 brutal-card inline-block">
+					🔍 QR Scanner
+				</h2>
+
+				<!-- Scan Mode Tab -->
+				<div class="flex gap-2 mb-4">
+					<button onclick="switchScanMode('camera')" id="btn-scan-cam" class="brutal-btn bg-white px-3 py-1 font-bold">Kamera Live</button>
+					<button onclick="switchScanMode('file')" id="btn-scan-file" class="brutal-btn bg-white px-3 py-1 font-bold">Upload Gambar</button>
+				</div>
+
+				<!-- Placeholder Awal (Sebelum Memilih Mode) -->
+				<div id="scanner-placeholder" class="bg-white p-6 brutal-card min-h-[300px] flex flex-col items-center justify-center text-center">
+					<p class="font-black text-lg mb-2">SIAP UNTUK SCAN?</p>
+					<p class="text-sm font-bold text-gray-700 mb-4">Pilih metode scanning di bawah ini untuk memulai:</p>
+					<div class="flex gap-3">
+						<button onclick="switchScanMode('camera')" class="brutal-btn bg-[#FFDE4D] px-4 py-2 font-black">📹 AKTIFKAN KAMERA</button>
+						<button onclick="switchScanMode('file')" class="brutal-btn bg-[#FF6B6B] px-4 py-2 font-black text-white">📁 UPLOAD GAMBAR</button>
+					</div>
+				</div>
+
+				<!-- Kamera UI (Hidden Awal) -->
+				<div id="scanner-camera-wrapper" class="bg-black brutal-card overflow-hidden relative min-h-[300px] hidden flex items-center justify-center">
+					<div id="reader" class="w-full bg-black"></div>
+					<div class="p-3 bg-neutral-900 border-t-4 border-black text-center">
+						<button onclick="manualStopCamera()" class="brutal-btn bg-[#FF6B6B] text-white font-black px-6 py-2 text-sm uppercase tracking-wider">
+							🛑 MATIKAN KAMERA
+						</button>
+					</div>
+				</div>
+
+				<!-- File UI (Hidden Awal) -->
+				<div id="scanner-file-wrapper" class="bg-white p-6 brutal-card hidden min-h-[300px] flex flex-col items-center justify-center text-center">
+					<p class="font-bold mb-4">Pilih file gambar QR Code dari perangkat Anda:</p>
+					<input type="file" id="qr-input-file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:brutal-btn file:bg-[#FF6B6B] file:text-white file:font-bold cursor-pointer">
+				</div>
+			</div>
+
+			<!-- Hasil Scan -->
+			<div class="bg-white p-4 brutal-card mt-6">
+				<h3 class="font-black uppercase text-sm tracking-wide text-gray-500 mb-1">Hasil Scan:</h3>
+				<div id="scan-result" class="p-3 bg-gray-100 border-2 border-dashed border-black font-mono break-all min-h-[60px] flex items-center">
+					Belum ada data terdeteksi...
+				</div>
+				<div id="scan-action-wrapper" class="hidden mt-3 text-right">
+					<button onclick="copyScanResult()" class="brutal-btn bg-[#4D96FF] px-4 py-1 text-white font-bold text-sm">Salin Teks</button>
+					<a id="scan-link" href="#" target="_blank" class="hidden brutal-btn bg-[#FFDE4D] px-4 py-1 font-bold text-sm ml-2">Buka Link</a>
+				</div>
+			</div>
+		</section>
+
+    </main>
+
+    <footer class="text-center font-bold mt-12 mb-6">
+        <p class="bg-white inline-block px-4 py-2 brutal-card">© 2026 TOKO IKLIMAH | @riozi_25 | Neo-Brutalism Style</p>
+    </footer>
+
+    <script>
+        // --- GLOBAL VARIABLES & INITIALIZATION ---
+        let currentTab = 'text';
+        let qrcodeInstance = null;
+        let html5QrcodeScanner = null;
+        let currentScanMode = 'camera';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Generate QR default pertama kali
+            generateQRCode();
+            // Jalankan scanner kamera default
+            //startCameraScanner();
+        });
+
+        // --- TAB SWITCHER FOR GENERATOR ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.qr-form').forEach(form => form.classList.add('hidden'));
+            document.getElementById(`form-${tabId}`).classList.remove('hidden');
+            
+            // Style active tab
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('bg-[#FF6B6B]', 'text-white');
+                btn.classList.add('bg-white');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('bg-white');
+            activeBtn.classList.add('bg-[#FF6B6B]');
+        }
+
+        // --- MAPS PARSER (TANPA LIBRARY TAMBAHAN) ---
+        // Fungsi cerdas mengekstrak koordinat dari link mentah Google Maps
+        function handleMapsInput(val) {
+            let lat = "";
+            let lon = "";
+
+            // 1. Cek jika input adalah koordinat manual langsung "lat,lon" (contoh: -6.234,106.845)
+            const manualCoords = val.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+            if (manualCoords) {
+                lat = manualCoords[1];
+                lon = manualCoords[2];
+            } else {
+                // 2. Cek format URL standar Google Maps (ada /@lat,lon,zoomz/ atau ?q=lat,lon)
+                const regexAt = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+                const regexQ = /q=(-?\d+\.\d+),(-?\d+\.\d+)/;
+                
+                const matchAt = val.match(regexAt);
+                const matchQ = val.match(regexQ);
+
+                if (matchAt) {
+                    lat = matchAt[1];
+                    lon = matchAt[2];
+                } else if (matchQ) {
+                    lat = matchQ[1];
+                    lon = matchQ[2];
+                }
+            }
+
+            // Update field visual pendukung
+            document.getElementById('input-maps-lat').value = lat;
+            document.getElementById('input-maps-lon').value = lon;
+        }
+
+        // --- QR GENERATOR LOGIC ---
+        function generateQRCode() {
+            let qrData = "";
+
+            // Memproses string data sesuai dengan spesifikasi standar masing-masing tipe data QR
+            if (currentTab === 'text') {
+                qrData = document.getElementById('input-text').value || "Brutal QR Studio";
+            } 
+            else if (currentTab === 'wifi') {
+                const ssid = document.getElementById('input-wifi-ssid').value || "WiFi";
+                const pass = document.getElementById('input-wifi-pass').value || "";
+                const type = document.getElementById('input-wifi-type').value;
+                // Format standar WiFi: WIFI:S:SSID;T:WPA;P:PASSWORD;;
+                qrData = `WIFI:S:${ssid};T:${type};P:${pass};;`;
+            } 
+            else if (currentTab === 'wa') {
+                let num = document.getElementById('input-wa-num').value || "628123456789";
+                num = num.replace(/[^0-123456789]/g, ''); // bersihkan karakter non-angka
+                const msg = encodeURIComponent(document.getElementById('input-wa-msg').value || "");
+                qrData = `https://wa.me/${num}${msg ? '?text=' + msg : ''}`;
+            } 
+            else if (currentTab === 'call') {
+                const phone = document.getElementById('input-call').value || "";
+                qrData = `tel:${phone}`;
+            } 
+            else if (currentTab === 'maps') {
+                const lat = document.getElementById('input-maps-lat').value;
+                const lon = document.getElementById('input-maps-lon').value;
+                
+                if (lat && lon) {
+                    // Format geo uri standar
+                    qrData = `geo:${lat},${lon}?q=${lat},${lon}`;
+                } else {
+                    // Fallback jika tidak ter-parse tapi ada input link, kita pakai link aslinya saja
+                    qrData = document.getElementById('input-maps-main').value || "geo:0,0";
+                }
+            }
+
+            // Hapus isi container QR sebelumnya sebelum menggambar ulang
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = "";
+
+            // Inisialisasi pembuatan QR Baru
+            qrcodeInstance = new QRCode(container, {
+                text: qrData,
+                width: 220,
+                height: 220,
+                colorDark : "#000000",
+                colorLight : "#FFFFFF",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            // Tampilkan tombol download setelah QR terbuat
+            setTimeout(() => {
+                const img = container.querySelector('img');
+                if(img) document.getElementById('qr-action-buttons').classList.remove('hidden');
+            }, 300);
+        }
+
+        function downloadQR() {
+            const img = document.getElementById('qrcode-container').querySelector('img');
+            if (img) {
+                const link = document.createElement('a');
+                link.download = `brutal-qr-${Date.now()}.png`;
+                link.href = img.src;
+                link.click();
+            }
+        }
+
+        // --- SCANNER LOGIC ---
+        function switchScanMode(mode) {
+			currentScanMode = mode;
+			
+			const btnCam = document.getElementById('btn-scan-cam');
+			const btnFile = document.getElementById('btn-scan-file');
+			const wrapPlaceholder = document.getElementById('scanner-placeholder');
+			const wrapCam = document.getElementById('scanner-camera-wrapper');
+			const wrapFile = document.getElementById('scanner-file-wrapper');
+
+			// Sembunyikan dahulu placeholder awal
+			wrapPlaceholder.classList.add('hidden');
+
+			if (mode === 'camera') {
+				// Atur warna Tab Aktif
+				btnCam.className = "brutal-btn bg-[#FFDE4D] px-3 py-1 font-bold";
+				btnFile.className = "brutal-btn bg-white px-3 py-1 font-bold";
+				
+				// Tampilkan container kamera, sembunyikan file
+				wrapCam.classList.remove('hidden');
+				wrapFile.classList.add('hidden');
+				
+				// Baru minta akses kamera & jalankan streaming di sini
+				startCameraScanner();
+			} else if (mode === 'file') {
+				// Atur warna Tab Aktif
+				btnFile.className = "brutal-btn bg-[#FFDE4D] px-3 py-1 font-bold";
+				btnCam.className = "brutal-btn bg-white px-3 py-1 font-bold";
+				
+				// Tampilkan container file, sembunyikan kamera
+				wrapFile.classList.remove('hidden');
+				wrapCam.classList.add('hidden');
+				
+				// Matikan kamera jika sebelumnya sedang berjalan
+				stopCameraScanner();
+			}
+		}
+		
+		// Fungsi baru untuk mematikan kamera secara manual via tombol
+		function manualStopCamera() {
+			if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+				html5QrcodeScanner.stop().then(() => {
+					// Reset UI Kembali ke tampilan Placeholder awal
+					document.getElementById('scanner-camera-wrapper').classList.add('hidden');
+					document.getElementById('scanner-placeholder').classList.remove('hidden');
+					
+					// Reset warna tombol tab menu utama ke default (putih)
+					document.getElementById('btn-scan-cam').className = "brutal-btn bg-white px-3 py-1 font-bold";
+					currentScanMode = 'none';
+				}).catch(err => console.error("Gagal menghentikan kamera:", err));
+			}
+		}
+
+
+        function onScanSuccess(decodedText, decodedResult) {
+            const resultDiv = document.getElementById('scan-result');
+            resultDiv.innerText = decodedText;
+            resultDiv.classList.remove('text-gray-400');
+            resultDiv.classList.add('text-black', 'font-bold');
+
+            // Tampilkan tombol aksi tambahan
+            document.getElementById('scan-action-wrapper').classList.remove('hidden');
+
+            // Deteksi pintar apakah hasilnya sebuah URL/Link web
+            const linkBtn = document.getElementById('scan-link');
+            if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
+                linkBtn.href = decodedText;
+                linkBtn.classList.remove('hidden');
+            } else {
+                linkBtn.classList.add('hidden');
+            }
+        }
+
+        function startCameraScanner() {
+			if (!html5QrcodeScanner) {
+				html5QrcodeScanner = new Html5Qrcode("reader");
+			}
+			
+			// Pastikan tidak melakukan double-scan jika sudah berjalan
+			if (html5QrcodeScanner.isScanning) return;
+
+			// Kamera baru di-request izinnya saat fungsi ini dipicu tombol
+			html5QrcodeScanner.start(
+				{ facingMode: "environment" }, 
+				{ fps: 10, qrbox: { width: 250, height: 250 } },
+				onScanSuccess,
+				(errorMessage) => { /* Abaikan error pencarian frame secara berkala */ }
+			).catch(err => {
+				document.getElementById('reader').innerHTML = `
+					<div class="text-white p-6 text-center font-bold">
+						<p class="text-sm text-red-400 mb-2">⚠️ Akses Kamera Ditolak / Tidak Ditemukan</p>
+						<p class="text-xs text-gray-400">Pastikan Anda memberikan izin kamera pada browser Anda.</p>
+					</div>
+				`;
+			});
+		}
+
+		function stopCameraScanner() {
+			if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+				html5QrcodeScanner.stop().then(() => {
+					// Kamera berhasil dimatikan dengan aman
+				}).catch(err => console.error("Gagal menghentikan kamera:", err));
+			}
+		}
+
+        // Scan via Upload File Gambar
+        document.getElementById('qr-input-file').addEventListener('change', e => {
+            if (e.target.files.length == 0) return;
+            
+            const imageFile = e.target.files[0];
+            const fileScanner = new Html5Qrcode("reader"); // Re-use reader node internal
+            
+            fileScanner.scanFile(imageFile, true)
+                .then(decodedText => {
+                    onScanSuccess(decodedText, null);
+                })
+                .catch(err => {
+                    const resultDiv = document.getElementById('scan-result');
+                    resultDiv.innerText = "❌ Gagal membaca QR Code dari gambar ini. Pastikan gambar jelas.";
+                    document.getElementById('scan-action-wrapper').classList.add('hidden');
+                });
+        });
+
+        function copyScanResult() {
+            const text = document.getElementById('scan-result').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Berhasil menyalin hasil scan ke clipboard!");
+            });
+        }
+    </script>
+</body>
+</html>
