@@ -1,4 +1,5 @@
 # ⚡QR STUDIO
+Live Demo : https://fauzi8162.github.io/QR-Code-Generator-Scanner/
 
 **QR STUDIO** adalah aplikasi berbasis web *all-in-one* untuk membuat (*generate*) dan memindai (*scan*) QR Code dengan antarmuka **Neo-Brutalism** yang berani dan responsif.
 
